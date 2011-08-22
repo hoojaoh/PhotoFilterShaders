@@ -1,0 +1,98 @@
+<languageVersion : 1.0;>
+
+kernel Levels
+<   namespace : "Levels";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 src;
+    output pixel4 dst;
+
+    parameter float3 rgbIn
+    <
+        minValue:float3(0.0,0.1,0.0);
+        maxValue:float3(255,9.99,255.0);
+        defaultValue:float3(0.0,1.0,255.0);
+    >;
+
+    parameter float3 rIn
+    <
+        minValue:float3(0.0,0.1,0.0);
+        maxValue:float3(255,9.99,255.0);
+        defaultValue:float3(0.0,1.0,255.0);
+    >;
+    
+    parameter float3 gIn
+    <
+        minValue:float3(0.0,0.1,0.0);
+        maxValue:float3(255,9.99,255.0);
+        defaultValue:float3(0.0,1.0,255.0);
+    >;
+    
+    parameter float3 bIn
+    <
+        minValue:float3(0.0,0.1,0.0);
+        maxValue:float3(255,9.99,255.0);
+        defaultValue:float3(0.0,1.0,255.0);
+    >;
+    
+    parameter float2 rgbOut
+    <
+        minValue:float2(0.0,0.0);
+        maxValue:float2(255.0,255.0);
+        defaultValue:float2(0.0,255.0);
+    >;
+    
+    parameter float2 rOut
+    <
+        minValue:float2(0.0,0.0);
+        maxValue:float2(255.0,255.0);
+        defaultValue:float2(0.0,255.0);
+    >;
+    
+    parameter float2 gOut
+    <
+        minValue:float2(0.0,0.0);
+        maxValue:float2(255.0,255.0);
+        defaultValue:float2(0.0,255.0);
+    >;
+    
+    parameter float2 bOut
+    <
+        minValue:float2(0.0,0.0);
+        maxValue:float2(255.0,255.0);
+        defaultValue:float2(0.0,255.0);
+    >;
+    
+    void
+    evaluatePixel()
+    {
+        dst = sampleNearest(src,outCoord());
+
+        // First adjust levels based on all channels
+        // Map the color according to the new min and max
+        dst = min( max(dst - (rgbIn[0]/255.0), 0.0)/((rgbIn[2]/255.0) - (rgbIn[0]/255.0)), 1.0);
+        // Gamma correction
+        dst = pow( dst, float4(1.0/rgbIn[1]));
+        // Linear interpolation based on output values
+        // returns min * (1 - color) + max * color
+        dst = mix(float4(rgbOut[0]/255.0), float4(rgbOut[1]/255.0), dst);
+
+        // Then adjust channels seperately
+        dst.r = min( max(dst.r - (rIn[0]/255.0), 0.0)/((rIn[2]/255.0) - (rIn[0]/255.0)), 1.0);
+        dst.r = pow( dst.r, (1.0/rIn[1]));
+        dst.r = mix(rOut[0]/255.0, rOut[1]/255.0, dst.r);
+        
+        dst.g = min( max(dst.g - (gIn[0]/255.0), 0.0)/((gIn[2]/255.0) - (gIn[0]/255.0)), 1.0);
+        dst.g = pow( dst.g, (1.0/gIn[1]));
+        dst.g = mix(gOut[0]/255.0, gOut[1]/255.0, dst.g);
+        
+        dst.b = min( max(dst.b - (bIn[0]/255.0), 0.0)/((bIn[2]/255.0) - (bIn[0]/255.0)), 1.0);
+        dst.b = pow( dst.b, (1.0/bIn[1]));
+        dst.b = mix(bOut[0]/255.0, bOut[1]/255.0, dst.b);
+        
+        // Make sure alpha channels did not get adjusted
+        dst.a = 1.0;
+    }
+}

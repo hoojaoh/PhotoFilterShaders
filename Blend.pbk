@@ -1,0 +1,240 @@
+<languageVersion : 1.0;>
+
+kernel Blend
+<   namespace : "Blend";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 baseImg;
+    input image4 blendImg;
+    output pixel4 result;
+    
+    
+    //1 - darken
+    //2 - multiply
+    //3 - color burn
+    //4 - linear burn
+    //5 - lighten
+    //6 - screen
+    //7 - color dodge
+    //8 - linear dodge
+    //9 - overlay
+    //10 - soft light
+    //11 - hard light
+    //12 - vivid light
+    //13 - linear light
+    //14 - pin light
+    //15 - difference
+    //16 - exclusion
+    parameter int mode
+    <
+        minValue:int(0);
+        maxValue:int(16);
+        defaultValue:int(0);
+    >;
+
+    // Photoshop blend modes
+    // Math from: http://dunnbypaul.net/blends/
+    // *not exactly same as photoshop
+    void
+    evaluatePixel()
+    {
+        result = sampleNearest(blendImg,outCoord());
+        float3 blend = float3(result.r,result.g,result.b);
+        result = sampleNearest(baseImg,outCoord());
+        float3 base = float3(result.r,result.g,result.b);
+        float3 dst;
+        
+        if(mode == 1){          //darken
+            dst.r = min(base.r,blend.r);
+            dst.g = min(base.g,blend.g);
+            dst.b = min(base.b,blend.b);
+        }
+        else if(mode == 2){     //multiply
+            dst = base * blend;
+        }
+        else if(mode == 3){     //color burn
+            dst = 1.0 - (1.0 - base)/blend;
+        }
+        else if(mode == 4){     //linear burn
+            dst = base + blend - 1.0;
+        }
+        else if(mode == 5){     //lighten
+            dst = max(base,blend);
+        }
+        else if(mode == 6){     //screen
+            dst = 1.0 - (1.0 - base)*(1.0 - blend);
+        }
+        else if(mode == 7){     //color dodge
+            dst = base/(1.0 - blend);
+        }
+        else if(mode == 8){     //linear dodge
+            dst = base + blend;
+        }
+        else if(mode == 9){     //overlay
+            //red
+            if(base.r > 0.5){  
+                dst.r = 1.0 - 2.0 * (1.0 - base.r) * (1.0 - blend.r);
+            }
+            else{
+                dst.r = 2.0 * base.r * blend.r;
+            }
+            
+            //green
+            if(base.g > 0.5){
+                dst.g = 1.0 - 2.0 * (1.0 - base.g) * (1.0 - blend.g);
+            }
+            else{
+                dst.g = 2.0 * base.g * blend.g;
+            }
+            
+            //blue
+            if(base.b > 0.5){
+                dst.b = 1.0 - 2.0 * (1.0 - base.b) * (1.0 - blend.b);
+            }
+            else{
+                dst.b = 2.0 * base.b * blend.b;
+            }
+        }
+        else if(mode == 10){    //soft light
+            //red
+            if(blend.r < 0.5){   
+                dst.r = 2.0 * base.r * blend.r + base.r * base.r * (1.0 - 2.0 * blend.r);
+            }
+            else{
+                dst.r = sqrt(base.r) * (2.0 * blend.r - 1.0) + 2.0 * base.r * (1.0 - blend.r);
+            }
+            
+            //green
+            if(blend.g < 0.5){   
+                dst.g = 2.0 * base.g * blend.g + base.g * base.g * (1.0 - 2.0 * blend.g);
+            }
+            else{
+                dst.g = sqrt(base.g) * (2.0 * blend.g - 1.0) + 2.0 * base.g * (1.0 - blend.g);
+            }
+            
+            //blue
+            if(blend.b < 0.5){   
+                dst.b = 2.0 * base.b * blend.b + base.b * base.b * (1.0 - 2.0 * blend.b);
+            }
+            else{
+                dst.b = sqrt(base.b) * (2.0 * blend.b - 1.0) + 2.0 * base.b * (1.0 - blend.b);
+            }
+        }
+        else if(mode == 11){    //hard light
+            //red
+            if(blend.r > 0.5){  
+                dst.r = 1.0 - 2.0 * (1.0 - blend.r) * (1.0 - base.r);
+            }
+            else{
+                dst.r = 2.0 * blend.r * base.r;
+            }
+            
+            //green
+            if(blend.g > 0.5){  
+                dst.g = 1.0 - 2.0 * (1.0 - blend.g) * (1.0 - base.g);
+            }
+            else{
+                dst.g = 2.0 * blend.g * base.g;
+            }
+            
+            //blue
+            if(blend.b > 0.5){  
+                dst.b = 1.0 - 2.0 * (1.0 - blend.b) * (1.0 - base.b);
+            }
+            else{
+                dst.b = 2.0 * blend.b * base.b;
+            }
+        }
+        else if(mode == 12){    //vivid light
+            //red
+            if(blend.r < 0.5){
+                dst.r = 1.0 - (1.0 - base.r)/(2.0 * blend.r);
+            }
+            else{   
+                dst.r = base.r/(1.0 - (2.0 * (blend.r - 0.5)));
+            }
+            
+            //green
+            if(blend.g < 0.5){
+                dst.g = 1.0 - (1.0 - base.g)/(2.0 * blend.g);
+            }
+            else{   
+                dst.g = base.g/(1.0 - (2.0 * (blend.g - 0.5)));
+            }
+            
+            //blue
+            if(blend.b < 0.5){
+                dst.b = 1.0 - (1.0 - base.b)/(2.0 * blend.b);
+            }
+            else{   
+                dst.b = base.b/(1.0 - (2.0 * (blend.b - 0.5)));
+            }
+        }
+        else if(mode == 13){    //linear light
+            //red
+            if(blend.r < 0.5){
+                dst.r = base.r + (2.0 * blend.r) - 1.0;
+            }
+            else{
+                dst.r = base.r + (2.0 * (blend.r - 0.5));
+            }
+            
+            //green
+            if(blend.g < 0.5){
+                dst.g = base.g + (2.0 * blend.g) - 1.0;
+            }
+            else{
+                dst.g = base.g + (2.0 * (blend.g - 0.5));
+            }
+            
+            //blue
+            if(blend.b < 0.5){
+                dst.b = base.b + (2.0 * blend.b) - 1.0;
+            }
+            else{
+                dst.b = base.b + (2.0 * (blend.b - 0.5));
+            }
+        }
+        else if(mode == 14){    //pin light
+            //red
+            if(blend.r < 0.5){
+                dst.r = min(base.r,2.0 * blend.r);
+            }
+            else{
+                dst.r = max(base.r,(2.0 *(blend.r - 0.5)));
+            }
+            
+            //green
+            if(blend.g < 0.5){
+                dst.g = min(base.g,2.0 * blend.g);
+            }
+            else{
+                dst.g = max(base.g,(2.0 *(blend.g - 0.5)));
+            }
+            
+            //blue
+            if(blend.b < 0.5){
+                dst.b = min(base.b,2.0 * blend.b);
+            }
+            else{
+                dst.b = max(base.b,(2.0 *(blend.b - 0.5)));
+            }
+        }
+        else if(mode == 15){    //difference
+            dst = abs(base - blend);
+        }
+        else if(mode == 16){    //exclusion
+            dst = 0.5 - 2.0*(base - 0.5)*(blend - 0.5);;
+        }
+        else{   // normal
+            float4 orig = sampleNearest(baseImg,outCoord());
+            dst = float3(orig.r,orig.g,orig.b);
+        }   
+        
+        result.r = dst.r;
+        result.g = dst.g;
+        result.b = dst.b;
+    }
+}

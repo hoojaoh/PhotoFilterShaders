@@ -1,0 +1,62 @@
+<languageVersion : 1.0;>
+
+kernel SimpleFrame
+<   namespace : "SimpleFrame";
+    vendor : "Paperlesss Post";
+    version : 1;
+>
+{
+    input image4 src;
+    output pixel4 dst;
+
+    parameter float size
+    <
+        minValue:float(0.0);
+        maxValue:float(500.0);
+        defaultValue:float(15.0);
+    >;
+    
+    parameter float2 imageSize
+    <
+        minValue:float2(0.0,0.0);
+        maxValue:float2(10000.0,10000.0);
+        defaultValue:float2(600.0, 600.0);
+    >;
+    
+    parameter float4 color
+    <
+        minValue:float4(0.0,0.0,0.0,0.0);
+        maxValue:float4(1.0,1.0,1.0,1.0);
+        defaultValue:float4(1.0,1.0,1.0,1.0);
+    >;
+    
+    parameter float radius
+    <
+        minValue:float(0.0);
+        maxValue:float(500.0);
+        defaultValue:float(15.0);
+    >;
+    
+
+    void
+    evaluatePixel()
+    {
+        float2 pos = outCoord();
+        dst = sampleNearest(src,pos);
+        
+        float2 c1 = float2(imageSize.x - (size + radius), size + radius);
+        float2 c2 = float2(size + radius, size + radius);
+        float2 c3 = float2(size + radius, imageSize.y - (size + radius));
+        float2 c4 = float2(imageSize.x - (size + radius), imageSize.y - (size + radius));
+        
+        
+        if(pos.x < size || pos.x > imageSize.x - size || pos.y < size || pos.y > imageSize.y - size ||
+            (distance(pos, c1) > radius && pos.x > c1.x && pos.y < c1.y) ||
+            (distance(pos, c2) > radius && pos.x < c2.x && pos.y < c2.y) ||
+            (distance(pos, c3) > radius && pos.x < c3.x && pos.y > c3.y) ||
+            (distance(pos, c4) > radius && pos.x > c4.x && pos.y > c4.y))
+        {
+            dst = color;
+        }
+    }
+}

@@ -1,0 +1,37 @@
+<languageVersion : 1.0;>
+
+kernel SimpleContrast
+<   namespace : "SimpleContrast";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 src;
+    output pixel4 dst;
+    
+    // contrast value
+    parameter float contrast
+    <
+        defaultValue:1.0;
+        minValue:0.0;
+        maxValue:3.0;
+    >;
+    
+    // midpoint determines which values are raised and which are lowered
+    parameter float mid
+    <
+        defaultValue:0.5;
+        minValue:0.0;
+        maxValue:1.0;
+    >;
+
+    void
+    evaluatePixel()
+    {
+        dst = sampleNearest(src,outCoord());
+        
+        dst.r = ((dst.r - mid) * contrast) + mid;
+        dst.g = ((dst.g - mid) * contrast) + mid;
+        dst.b = ((dst.b - mid) * contrast) + mid;
+    }
+}

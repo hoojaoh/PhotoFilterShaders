@@ -1,0 +1,43 @@
+<languageVersion : 1.0;>
+
+kernel SimpleFrame
+<   namespace : "SimpleFrame";
+    vendor : "Paperlesss Post";
+    version : 1;
+>
+{
+    input image4 src;
+    output pixel4 dst;
+
+    parameter float size
+    <
+        minValue:float(0.0);
+        maxValue:float(500.0);
+        defaultValue:float(15.0);
+    >;
+    
+    parameter float2 imageSize
+    <
+        minValue:float2(0.0,0.0);
+        maxValue:float2(10000.0,10000.0);
+        defaultValue:float2(600.0, 600.0);
+    >;
+    
+    parameter float4 color
+    <
+        minValue:float4(0.0,0.0,0.0,0.0);
+        maxValue:float4(1.0,1.0,1.0,1.0);
+        defaultValue:float4(1.0,1.0,1.0,1.0);
+    >;
+    void
+    evaluatePixel()
+    {
+        float2 pos = outCoord();
+        dst = sampleNearest(src,pos);
+        
+        if(pos.x < size || pos.x > imageSize.x - size || pos.y < size || pos.y > imageSize.y - size)
+        {
+            dst = color;
+        }
+    }
+}
