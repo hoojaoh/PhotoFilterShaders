@@ -9,11 +9,11 @@ kernel Vignette
     input image4 src;
     output pixel4 dst;
     
-    parameter float2 widthByHeight
+    parameter float4 bBox
     <
-        minValue:float2(0.0,0.0);
-        maxValue:float2(1000.0,1000.0);
-        defaultValue:float2(600.0,400.0);
+        minValue:float4(0.0,0.0,0.0,0.0);
+        maxValue:float4(1000.0,1000.0,1000.0,1000.0);
+        defaultValue:float4(0.0,600.0,0.0,400.0);
     >;
     
     parameter float2 center
@@ -47,8 +47,10 @@ kernel Vignette
     void
     evaluatePixel()
     {
+        dst = sampleNearest(src, outCoord());           
+        
         float dist = distance(center, outCoord());
-        dist = dist/distance(center,widthByHeight);     // normalize the distance between 0 and 1
+        dist = dist/distance(center,float2(bBox[0],bBox[3]));     // normalize the distance between 0 and 1
         float colorUp = factor * pow(dist,exponent);    // used to colorize darken areas
         dist = 1.0 - factor * pow(dist,exponent);       // darken colors in relation to distance from center
 

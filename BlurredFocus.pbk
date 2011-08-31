@@ -9,11 +9,18 @@ kernel BlurredFocus
     input image4 src;
     output pixel4 dst;
 
-    parameter float2 widthByHeight
+    parameter float4 bBox
+    <
+        minValue:float4(0.0,0.0,0.0,0.0);
+        maxValue:float4(1000.0,1000.0,1000.0,1000.0);
+        defaultValue:float4(0.0,600.0,0.0,400.0);
+    >;
+
+    parameter float2 center
     <
         minValue:float2(0.0,0.0);
         maxValue:float2(1000.0,1000.0);
-        defaultValue:float2(600.0,400.0);
+        defaultValue:float2(300.0,200.0);
     >;
 
     parameter float exponent
@@ -40,10 +47,9 @@ kernel BlurredFocus
     void
     evaluatePixel()
     {
-        float2 center = float2(widthByHeight.x/2.0,widthByHeight.y/2.0);
         float2 pos = outCoord();
         float dist = distance(center, outCoord());
-        dist = dist/distance(center,widthByHeight);
+        dist = dist/distance(center,float2(bBox[1],bBox[3]));
         float blurFactor = factor * pow(dist,exponent) * maxBlur;    // used to control size of sampling area
             
         float2 p0 = float2(pos.x - blurFactor, pos.y - blurFactor);
