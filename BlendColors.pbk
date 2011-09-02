@@ -9,7 +9,6 @@ kernel Blend
     input image4 baseImg;
     output pixel4 result;
     
-    
     //1 - darken
     //2 - multiply
     //3 - color burn
@@ -84,21 +83,16 @@ kernel Blend
         defaultValue:float4(0.0,600.0,0.0,400.0);
     >;
 
-    // center of image
-    parameter float2 center
-    <
-        minValue:float2(0.0,0.0);
-        maxValue:float2(10000.0,10000.0);
-        defaultValue:float2(300.0,200.0);
-    >;
     
     // Photoshop blend modes
     // Math from: http://dunnbypaul.net/blends/
     void
     evaluatePixel()
     {
+        float2 center = float2((bBox[0] + bBox[1])/2.0,(bBox[2] + bBox[3])/2.0);
         float2 pos = outCoord();
         result = sampleNearest(baseImg,outCoord());
+        float alpha = result.a;
         float3 blend = float3(result.r,result.g,result.b);  // blendType = 2
     
         if(blendType == 0){ // blendType = 0
@@ -313,5 +307,6 @@ kernel Blend
         result.r = dst.r;
         result.g = dst.g;
         result.b = dst.b;
+        result.a = alpha;
     }
 }

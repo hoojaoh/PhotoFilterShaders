@@ -9,6 +9,7 @@ kernel Vignette
     input image4 src;
     output pixel4 dst;
     
+    //left, right, top, bottom
     parameter float4 bBox
     <
         minValue:float4(0.0,0.0,0.0,0.0);
@@ -48,6 +49,7 @@ kernel Vignette
     evaluatePixel()
     {
         dst = sampleNearest(src, outCoord());           
+        float alpha = dst.a;
         
         float dist = distance(center, outCoord());
         dist = dist/distance(center,float2(bBox[0],bBox[3]));     // normalize the distance between 0 and 1
@@ -60,5 +62,6 @@ kernel Vignette
         dst.g = dst.g + (colorUp * color.g);
         dst.b = dst.b * dist;
         dst.b = dst.b + (colorUp * color.b);
+        dst.a = alpha;;
     }
 }

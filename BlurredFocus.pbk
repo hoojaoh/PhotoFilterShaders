@@ -62,7 +62,7 @@ kernel BlurredFocus
         float4 w1 = sampleNearest(src,p1); // lower right
         float4 w2 = sampleNearest(src,p2); // upper left
         float4 w3 = sampleNearest(src,p3); // upper right
-            
+        
         // partial derivatives with respect to x at points w0 through w3
         // i.e slopes of color values only in relation to x axis
         // interpolate between previous and next x values

@@ -69,7 +69,7 @@ kernel Levels
     evaluatePixel()
     {
         dst = sampleNearest(src,outCoord());
-
+        float alpha = dst.a;
         // First adjust levels based on all channels
         // Map the color according to the new min and max
         dst = min( max(dst - (rgbIn[0]/255.0), 0.0)/((rgbIn[2]/255.0) - (rgbIn[0]/255.0)), 1.0);
@@ -93,6 +93,6 @@ kernel Levels
         dst.b = mix(bOut[0]/255.0, bOut[1]/255.0, dst.b);
         
         // Make sure alpha channels did not get adjusted
-        dst.a = 1.0;
+        dst.a = alpha;
     }
 }
