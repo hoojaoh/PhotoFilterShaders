@@ -18,11 +18,18 @@ kernel BlurredFocus
 
     parameter float2 center
     <
-        minValue:float2(0.0,0.0);
-        maxValue:float2(1000.0,1000.0);
-        defaultValue:float2(300.0,200.0);
+        minValue:float2(-2.0,-2.0);
+        maxValue:float2(2.0,2.0);
+        defaultValue:float2(0.5,0.5);
     >;
-
+    
+    parameter float size
+    <
+        minValue:float(0);
+        maxValue:float(2);
+        defaultValue:float(1);
+    >;
+    
     parameter float exponent
     <
         minValue:float(-10.0);
@@ -48,8 +55,10 @@ kernel BlurredFocus
     evaluatePixel()
     {
         float2 pos = outCoord();
-        float dist = distance(center, outCoord());
-        dist = dist/distance(center,float2(bBox[1],bBox[3]));
+        float2 centerPos = float2(mix(bBox[0],bBox[1],center[0]),mix(bBox[2],bBox[3],center[1]));
+        float dist = distance(centerPos,pos);
+        dist = dist * (1.0/size);
+        dist = dist/distance(centerPos,float2(bBox[1],bBox[3]));
         float blurFactor = factor * pow(dist,exponent) * maxBlur;    // used to control size of sampling area
             
         float2 p0 = float2(pos.x - blurFactor, pos.y - blurFactor);

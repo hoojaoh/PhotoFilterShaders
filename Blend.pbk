@@ -33,6 +33,13 @@ kernel Blend
         maxValue:int(16);
         defaultValue:int(0);
     >;
+    
+    parameter float alpha
+    <
+        minValue:float(0.0);
+        maxValue:float(1.0);
+        defaultValue:float(1.0);
+    >;
 
     // Photoshop blend modes
     // Math from: http://dunnbypaul.net/blends/
@@ -43,6 +50,7 @@ kernel Blend
         result = sampleNearest(blendImg,outCoord());
         float3 blend = float3(result.r,result.g,result.b);
         result = sampleNearest(baseImg,outCoord());
+        float originalAlpha = result.a;
         float3 base = float3(result.r,result.g,result.b);
         float3 dst;
         
@@ -233,8 +241,9 @@ kernel Blend
             dst = float3(orig.r,orig.g,orig.b);
         }   
         
-        result.r = dst.r;
-        result.g = dst.g;
-        result.b = dst.b;
+        result.r = mix(result.r,dst.r,alpha);
+        result.g = mix(result.g,dst.g,alpha);
+        result.b = mix(result.b,dst.b,alpha);
+        result.a = originalAlpha;
     }
 }

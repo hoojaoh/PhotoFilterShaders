@@ -1,25 +1,36 @@
 <languageVersion : 1.0;>
 
-kernel Vignette
-<   namespace : "Vignette";
+kernel Smudge
+<   namespace : "Smudge";
     vendor : "Paperless Post";
     version : 1;
-    author : "Nicholas Schaubeck";
 >
 {
     input image4 src;
     output pixel4 dst;
     
-    //left, right, top, bottom
+     //left, right, top, bottom
     parameter float4 bBox
     <
         minValue:float4(0.0,0.0,0.0,0.0);
         maxValue:float4(1000.0,1000.0,1000.0,1000.0);
         defaultValue:float4(0.0,600.0,0.0,400.0);
     >;
+
+    parameter float exponent
+    <
+        minValue:float(-10.0);
+        maxValue:float(10.0);
+        defaultValue:float(0.0);
+    >;
     
-    
-    //stores the location of the vignette as a pair of interpolation factors between 0 and 1
+    parameter float factor
+    <
+        minValue:float(-10.0);
+        maxValue:float(10.0);
+        defaultValue:float(0.0);
+    >;
+
     parameter float2 center
     <
         minValue:float2(-2.0,-2.0);
@@ -35,27 +46,20 @@ kernel Vignette
         defaultValue:float(1);
     >;
     
-    parameter float exponent
+    //smudge factor
+    parameter float smudge
     <
-        minValue:float(-10.0);
-        maxValue:float(10.0);
+        minValue:float(0.0);
+        maxValue:float(1.0);
         defaultValue:float(0.0);
     >;
     
-    parameter float factor
+    parameter float smudgeSize
     <
-        minValue:float(-10.0);
-        maxValue:float(10.0);
-        defaultValue:float(0.0);
+        minValue:float(0.0);
+        maxValue:float(1.0);
     >;
-    
-    parameter float3 color
-    <
-        minValue:float3(0.0,0.0,0.0);
-        maxValue:float3(1.0,1.0,1.0);
-        defaultValue:float3(0.0,0.0,0.0);
-    >;
-    
+
     void
     evaluatePixel()
     {
@@ -65,15 +69,10 @@ kernel Vignette
         float dist = distance(centerPos,outCoord());
         dist = dist * (1.0/size);
         dist = dist/distance(centerPos,float2(bBox[0],bBox[3]));     // normalize the distance between 0 and 1
-        float colorUp = factor * pow(dist,exponent);    // used to colorize darken areas
         dist = 1.0 - factor * pow(dist,exponent);       // darken colors in relation to distance from center
-
-        dst.r = dst.r * dist;
-        dst.r = dst.r + (colorUp * color.r);
-        dst.g = dst.g * dist;
-        dst.g = dst.g + (colorUp * color.g);
-        dst.b = dst.b * dist;
-        dst.b = dst.b + (colorUp * color.b);
-        dst.a = alpha;;
+        dist *= smudge;
+        
+        dst *= 1.0 + dist;
+        dst.a = alpha;
     }
 }

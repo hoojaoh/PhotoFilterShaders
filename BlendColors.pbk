@@ -31,6 +31,14 @@ kernel Blend
         maxValue:int(16);
         defaultValue:int(0);
     >;
+    
+    //controls size of the gradient
+    parameter float size
+    <
+        minValue:float(0);
+        maxValue:float(2);
+        defaultValue:float(1);
+    >;
 
     //0 - other color
     //1 - gradient
@@ -83,16 +91,29 @@ kernel Blend
         defaultValue:float4(0.0,600.0,0.0,400.0);
     >;
 
+    //stores the location of the vignette as a pair of interpolation factors between 0 and 1
+    parameter float2 center
+    <
+        minValue:float2(-2.0,-2.0);
+        maxValue:float2(2.0,2.0);
+        defaultValue:float2(0.5,0.5);
+    >;
+    
+    parameter float alpha
+    <
+        minValue:float(0.0);
+        maxValue:float(1.0);
+        defaultValue:float(1.0);
+    >;
     
     // Photoshop blend modes
     // Math from: http://dunnbypaul.net/blends/
     void
     evaluatePixel()
     {
-        float2 center = float2((bBox[0] + bBox[1])/2.0,(bBox[2] + bBox[3])/2.0);
         float2 pos = outCoord();
-        result = sampleNearest(baseImg,outCoord());
-        float alpha = result.a;
+        result = sampleNearest(baseImg,pos);
+        float originalAlpha = result.a;
         float3 blend = float3(result.r,result.g,result.b);  // blendType = 2
     
         if(blendType == 0){ // blendType = 0
@@ -100,8 +121,10 @@ kernel Blend
         }
         else if(blendType == 1){ // blendType = 1
             blend = color1;
-            float dist = distance(center, outCoord());
-            dist = dist/distance(center,float2(bBox[1],bBox[3]));      // normalize the distance between 0 and 1
+            float2 centerPos = float2(mix(bBox[0],bBox[1],center[0]),mix(bBox[2],bBox[3],center[1]));
+            float dist = distance(centerPos,pos);
+            dist = dist * (1.0/size);
+            dist = dist/distance(centerPos,float2(bBox[1],bBox[3]));       // normalize the distance between 0 and 1
             float colorUp = factor * pow(dist,exponent);                // used to colorize darken areas
             dist = 1.0 - factor * pow(dist,exponent);                   // darken colors in relation to distance from center
             
@@ -132,7 +155,9 @@ kernel Blend
             dst = base + blend - 1.0;
         }
         else if(mode == 5){     //lighten
-            dst = max(base,blend);
+            dst.r = max(base.r,blend.r);
+            dst.g = max(base.g,blend.g);
+            dst.b = max(base.b,blend.b);
         }
         else if(mode == 6){     //screen
             dst = 1.0 - (1.0 - base)*(1.0 - blend);
@@ -304,9 +329,9 @@ kernel Blend
             dst = float3(orig.r,orig.g,orig.b);
         }   
         
-        result.r = dst.r;
-        result.g = dst.g;
-        result.b = dst.b;
-        result.a = alpha;
+        result.r = mix(result.r,dst.r,alpha);
+        result.g = mix(result.g,dst.g,alpha);
+        result.b = mix(result.b,dst.b,alpha);
+        result.a = originalAlpha;
     }
 }
