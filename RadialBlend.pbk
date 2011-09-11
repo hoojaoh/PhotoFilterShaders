@@ -1,0 +1,73 @@
+<languageVersion : 1.0;>
+
+kernel RadialBlend      
+<   namespace : "Radial Blend";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 src;
+    input image4 src2;
+    output pixel4 dst;
+    
+    //left, right, top, bottom
+    parameter float4 bBox
+    <
+        minValue:float4(0.0,0.0,0.0,0.0);
+        maxValue:float4(1000.0,1000.0,1000.0,1000.0);
+        defaultValue:float4(0.0,600.0,0.0,400.0);
+    >;
+    
+    
+    //stores the location of the vignette as a pair of interpolation factors between 0 and 1
+    parameter float2 center
+    <
+        minValue:float2(-2.0,-2.0);
+        maxValue:float2(2.0,2.0);
+        defaultValue:float2(0.5,0.5);
+    >;
+
+    //controls size of the gradient
+    parameter float size
+    <
+        minValue:float(0);
+        maxValue:float(2);
+        defaultValue:float(1);
+    >;
+    
+    parameter float exponent
+    <
+        minValue:float(-10.0);
+        maxValue:float(10.0);
+        defaultValue:float(0.0);
+    >;
+    
+    parameter float factor
+    <
+        minValue:float(-10.0);
+        maxValue:float(10.0);
+        defaultValue:float(0.0);
+    >;
+    
+    void
+    evaluatePixel()
+    {
+        dst = sampleNearest(src, outCoord());
+        float4 blurred = sampleNearest(src2, outCoord());
+        float alpha = dst.a;
+        float2 centerPos = float2(mix(bBox[0],bBox[1],center[0]),mix(bBox[2],bBox[3],center[1]));
+        float dist = distance(centerPos,outCoord());
+        dist = dist * (1.0/size);
+        dist = dist/distance(centerPos,float2(bBox[0],bBox[3]));     // normalize the distance between 0 and 1
+        float blurFactor = factor * pow(dist,exponent);    // used to colorize darken areas
+
+        if(blurFactor > 1.0){
+            dst = blurred;
+        }
+        else if(blurFactor > 0.0){
+            dst = mix(dst,blurred,blurFactor);
+        }
+        
+        dst.a = alpha;
+    }
+}
