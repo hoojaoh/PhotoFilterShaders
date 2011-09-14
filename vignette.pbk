@@ -10,10 +10,19 @@ kernel Vignette
     input image4 src;
     output pixel4 dst;
     
+    //0 - circular
+    //1 - rectangular
+    parameter int areaMode
+    <
+        minValue:int(0);
+        maxValue:int(1);
+        defaultValue:int(0);
+    >;
+    
     //left, right, top, bottom
     parameter float4 bBox
     <
-        minValue:float4(0.0,0.0,0.0,0.0);
+        minValue:float4(-1000.0,-1000.0,-1000.0,-1000.0);
         maxValue:float4(1000.0,1000.0,1000.0,1000.0);
         defaultValue:float4(0.0,600.0,0.0,400.0);
     >;
@@ -30,9 +39,9 @@ kernel Vignette
     //controls size of the gradient
     parameter float size
     <
-        minValue:float(0);
-        maxValue:float(2);
-        defaultValue:float(1);
+        minValue:float(0.01);
+        maxValue:float(2.0);
+        defaultValue:float(1.0);
     >;
     
     parameter float exponent
@@ -59,21 +68,42 @@ kernel Vignette
     void
     evaluatePixel()
     {
-        dst = sampleNearest(src, outCoord());           
+        float2 pos = outCoord();
+        dst = sampleNearest(src, pos);           
         float alpha = dst.a;
-        float2 centerPos = float2(mix(bBox[0],bBox[1],center[0]),mix(bBox[2],bBox[3],center[1]));
-        float dist = distance(centerPos,outCoord());
-        dist = dist * (1.0/size);
-        dist = dist/distance(centerPos,float2(bBox[0],bBox[3]));     // normalize the distance between 0 and 1
-        float colorUp = factor * pow(dist,exponent);    // used to colorize darken areas
-        dist = 1.0 - factor * pow(dist,exponent);       // darken colors in relation to distance from center
-
-        dst.r = dst.r * dist;
-        dst.r = dst.r + (colorUp * color.r);
-        dst.g = dst.g * dist;
-        dst.g = dst.g + (colorUp * color.g);
-        dst.b = dst.b * dist;
-        dst.b = dst.b + (colorUp * color.b);
-        dst.a = alpha;;
+        float dR = distance(float2(bBox[0] + ((bBox[1]-bBox[0])/2.0),bBox[2] + ((bBox[3]-bBox[2])/2.0)), float2(bBox[0],bBox[2]));  //distance from center to corner
+        float dist;
+        float2 centerPos;
+        float colorUp;
+        
+        if(areaMode == 0){
+            centerPos = float2(mix(bBox[0],bBox[1],center[0]),mix(bBox[2],bBox[3],center[1]));
+            dist = distance(centerPos,outCoord());
+            dist = dist/dR;     // normalize the distance between 0 and 1
+            dist = dist * (1.0/size);
+            colorUp = factor * pow(dist,exponent);    // used to colorize darken areas
+            dist = 1.0 - factor * pow(dist,exponent);       // darken colors in relation to distance from center
+            
+            dst.r = dst.r * dist;
+            dst.r = dst.r + (colorUp * color.r);
+            dst.g = dst.g * dist;
+            dst.g = dst.g + (colorUp * color.g);
+            dst.b = dst.b * dist;
+            dst.b = dst.b + (colorUp * color.b);
+            dst.a = alpha;
+        }
+        else if(areaMode == 1){
+            dist = min(pos.x - bBox[0], min(bBox[1] - pos.x, min(pos.y - bBox[2], bBox[3] - pos.y)));
+            dist = dist/(size * dR);
+            dist = factor * pow(dist,exponent);       // darken colors in relation to distance from center
+                
+            if(dist <= 1.0 && dist >= 0.0){
+                dst.r = mix(color.r,dst.r,dist);
+                dst.g = mix(color.g,dst.g,dist);
+                dst.b = mix(color.b,dst.b,dist);
+            }
+             
+            dst.a = alpha;
+        }
     }
 }

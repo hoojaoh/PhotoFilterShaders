@@ -18,6 +18,14 @@ kernel RadialBlend
         defaultValue:float4(0.0,600.0,0.0,400.0);
     >;
     
+    //0 - circular gradient
+    //1 - rectangular gradient
+    parameter int areaMode
+    <
+        minValue:int(0);
+        maxValue:int(1);
+        defaultValue:int(0);
+    >;
     
     //stores the location of the vignette as a pair of interpolation factors between 0 and 1
     parameter float2 center
@@ -30,7 +38,7 @@ kernel RadialBlend
     //controls size of the gradient
     parameter float size
     <
-        minValue:float(0);
+        minValue:float(0.1);
         maxValue:float(2);
         defaultValue:float(1);
     >;
@@ -52,22 +60,43 @@ kernel RadialBlend
     void
     evaluatePixel()
     {
-        dst = sampleNearest(src, outCoord());
-        float4 blurred = sampleNearest(src2, outCoord());
+        float2 pos = outCoord();
+        dst = sampleNearest(src, pos);
+        float4 blurred = sampleNearest(src2, pos);
+        dst = sampleNearest(src, pos);
         float alpha = dst.a;
-        float2 centerPos = float2(mix(bBox[0],bBox[1],center[0]),mix(bBox[2],bBox[3],center[1]));
-        float dist = distance(centerPos,outCoord());
-        dist = dist * (1.0/size);
-        dist = dist/distance(centerPos,float2(bBox[0],bBox[3]));     // normalize the distance between 0 and 1
-        float blurFactor = factor * pow(dist,exponent);    // used to colorize darken areas
+        float dR = distance(float2(bBox[0] + ((bBox[1]-bBox[0])/2.0),bBox[2] + ((bBox[3]-bBox[2])/2.0)), float2(bBox[0],bBox[2]));  //distance from center to corner
+        float dist;
+        float2 centerPos;
+        
+        if(areaMode == 0){
+            float2 centerPos = float2(mix(bBox[0],bBox[1],center[0]),mix(bBox[2],bBox[3],center[1]));
+            dist = distance(centerPos,pos);
+            dist = dist * (1.0/size);
+            dist = dist/distance(centerPos,float2(bBox[0],bBox[3]));     // normalize the distance between 0 and 1
+            float blurFactor = factor * pow(dist,exponent);    // used to colorize darken areas
 
-        if(blurFactor > 1.0){
-            dst = blurred;
+            if(blurFactor > 1.0){
+                dst = blurred;
+            }
+            else if(blurFactor > 0.0){
+                dst = mix(dst,blurred,blurFactor);
+            }
         }
-        else if(blurFactor > 0.0){
-            dst = mix(dst,blurred,blurFactor);
+        else if(areaMode == 1){
+            dist = min(pos.x - bBox[0], min(bBox[1] - pos.x, min(pos.y - bBox[2], bBox[3] - pos.y)));
+            dist = dist/(size * dR);
+            dist = factor * pow(dist,exponent);       // darken colors in relation to distance from center
+                
+            if(dist <= 1.0 && dist >= 0.0){
+                dst.r = mix(blurred.r,dst.r,dist);
+                dst.g = mix(blurred.g,dst.g,dist);
+                dst.b = mix(blurred.b,dst.b,dist);
+            }
         }
         
         dst.a = alpha;
+        
+        
     }
 }
