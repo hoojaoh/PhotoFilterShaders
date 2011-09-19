@@ -1,0 +1,63 @@
+<languageVersion : 1.0;>
+
+kernel Blur
+<   namespace : "Blur";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 src;
+    output pixel4 dst;
+
+    /*parameter float strength
+    <
+        minValue:float(0.0);
+        maxValue:float(1.0);
+        defaultValue:float(0.5);
+    >;*/
+
+    parameter float threshold
+    <
+        minValue:float(0.0);
+        maxValue:float(1.0);
+        defaultValue:float(0.5);
+    >;
+    
+    void
+    evaluatePixel()
+    {
+        float2 pos = outCoord();
+        dst = sampleNearest(src, pos);
+        float strength = length(dst.rgb) / length(float3(1.0,1.0,1.0));
+        if(strength > threshold){
+            dst += sampleNearest(src, float2(pos.x-1.0,pos.y-1.0)); 
+            dst += sampleNearest(src, float2(pos.x,pos.y-1.0));
+            dst += sampleNearest(src, float2(pos.x+1.0,pos.y-1.0));
+            dst += sampleNearest(src, float2(pos.x-1.0,pos.y));
+            dst += sampleNearest(src, float2(pos.x+1.0,pos.y));
+            dst += sampleNearest(src, float2(pos.x-1.0,pos.y+1.0));
+            dst += sampleNearest(src, float2(pos.x,pos.y+1.0));
+            dst += sampleNearest(src, float2(pos.x+1.0,pos.y+1.0));
+            dst += sampleNearest(src, float2(pos.x-2.0,pos.y-2.0));
+            dst += sampleNearest(src, float2(pos.x-1.0,pos.y-2.0));
+            dst += sampleNearest(src, float2(pos.x,pos.y-2.0));
+            dst += sampleNearest(src, float2(pos.x+1.0,pos.y-2.0));
+            dst += sampleNearest(src, float2(pos.x+2.0,pos.y-2.0));
+            dst += sampleNearest(src, float2(pos.x-2.0,pos.y-1.0));
+            dst += sampleNearest(src, float2(pos.x+2.0,pos.y-1.0));
+            dst += sampleNearest(src, float2(pos.x-2.0,pos.y));
+            dst += sampleNearest(src, float2(pos.x+2.0,pos.y));
+            dst += sampleNearest(src, float2(pos.x-2.0,pos.y+1.0));
+            dst += sampleNearest(src, float2(pos.x+2.0,pos.y+1.0));
+            dst += sampleNearest(src, float2(pos.x-2.0,pos.y+2.0));
+            dst += sampleNearest(src, float2(pos.x-1.0,pos.y+2.0));
+            dst += sampleNearest(src, float2(pos.x,pos.y+2.0));
+            dst += sampleNearest(src, float2(pos.x+1.0,pos.y+2.0));
+            dst += sampleNearest(src, float2(pos.x+2.0,pos.y+2.0));
+            
+            dst/= 24.0;
+            
+            dst = mix(sampleNearest(src,pos),dst,strength);
+        }
+    }
+}

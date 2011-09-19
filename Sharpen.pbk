@@ -1,0 +1,36 @@
+<languageVersion : 1.0;>
+
+kernel Sharpen
+<   namespace : "Sharpen";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 src;
+    output pixel4 dst;
+
+    parameter float strength
+    <
+        minValue:float(0.0);
+        maxValue:float(1.0);
+        defaultValue:float(0.5);
+    >;
+
+    void
+    evaluatePixel()
+    {
+        float2 pos = outCoord();
+        dst = 9.0 * sampleNearest(src, pos);
+        
+        dst -= sampleNearest(src, float2(pos.x-1.0,pos.y-1.0)); 
+        dst -= sampleNearest(src, float2(pos.x,pos.y-1.0));
+        dst -= sampleNearest(src, float2(pos.x+1.0,pos.y-1.0));
+        dst -= sampleNearest(src, float2(pos.x-1.0,pos.y));
+        dst -= sampleNearest(src, float2(pos.x+1.0,pos.y));
+        dst -= sampleNearest(src, float2(pos.x-1.0,pos.y+1.0));
+        dst -= sampleNearest(src, float2(pos.x,pos.y+1.0));
+        dst -= sampleNearest(src, float2(pos.x+1.0,pos.y+1.0));  
+        
+        dst = dst * strength + (1.0 - strength) * sampleNearest(src, pos);
+    }
+}
