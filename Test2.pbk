@@ -1,0 +1,20 @@
+<languageVersion : 1.0;>
+
+kernel Test2
+<   namespace : "Test2";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 src;
+    input image4 src2;
+    output pixel4 dst;
+
+    void
+    evaluatePixel()
+    {
+        dst = sampleNearest(src,outCoord());
+        dst = sampleNearest(src2, outCoord());
+        dst *= 1.5;
+    }
+}

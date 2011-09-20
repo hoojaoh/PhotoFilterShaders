@@ -9,28 +9,84 @@ kernel Sharpen
     input image4 src;
     output pixel4 dst;
 
+    parameter float4 bBox
+    <
+        minValue:float4(0.0,0.0,0.0,0.0);
+        maxValue:float4(1000.0,1000.0,1000.0,1000.0);
+        defaultValue:float4(0.0,600.0,0.0,400.0);
+    >;
+    
+    //0 - regular
+    //1 - circular
+    parameter int mode
+    <
+        minValue:int(0);
+        maxValue:int(1);
+        defaultValue:int(0);
+    >;
+    
+    parameter float2 center
+    <
+        minValue:float2(-2.0,-2.0);
+        maxValue:float2(2.0,2.0);
+        defaultValue:float2(0.5,0.5);
+    >;
+
     parameter float strength
     <
         minValue:float(0.0);
-        maxValue:float(1.0);
+        maxValue:float(4.0);
         defaultValue:float(0.5);
+    >;
+
+    parameter float size
+    <
+        minValue:float(0.1);
+        maxValue:float(2);
+        defaultValue:float(1);
+    >;
+
+    parameter float exponent
+    <
+        minValue:float(-10.0);
+        maxValue:float(10.0);
+        defaultValue:float(0.0);
+    >;
+
+    parameter float factor
+    <
+        minValue:float(-10.0);
+        maxValue:float(10.0);
+        defaultValue:float(0.0);
     >;
 
     void
     evaluatePixel()
     {
         float2 pos = outCoord();
-        dst = 9.0 * sampleNearest(src, pos);
         
-        dst -= sampleNearest(src, float2(pos.x-1.0,pos.y-1.0)); 
-        dst -= sampleNearest(src, float2(pos.x,pos.y-1.0));
-        dst -= sampleNearest(src, float2(pos.x+1.0,pos.y-1.0));
-        dst -= sampleNearest(src, float2(pos.x-1.0,pos.y));
-        dst -= sampleNearest(src, float2(pos.x+1.0,pos.y));
-        dst -= sampleNearest(src, float2(pos.x-1.0,pos.y+1.0));
-        dst -= sampleNearest(src, float2(pos.x,pos.y+1.0));
-        dst -= sampleNearest(src, float2(pos.x+1.0,pos.y+1.0));  
+        float sharpenFactor = 1.0;
+        if(mode == 1){
+            float2 centerPos = float2(mix(bBox[0],bBox[1],center[0]),mix(bBox[2],bBox[3],center[1]));
+            float dist = distance(centerPos,pos);
+            dist = dist * (1.0/size);
+            dist = dist/distance(centerPos,float2(bBox[0],bBox[3]));     // normalize the distance between 0 and 1
+            sharpenFactor = factor * pow(dist,exponent);    // used to colorize darken areas
+        }
         
-        dst = dst * strength + (1.0 - strength) * sampleNearest(src, pos);
+        dst = sampleNearest(src, float2(pos.x-1.0,pos.y-1.0)); 
+        dst += sampleNearest(src, float2(pos.x,pos.y-1.0));
+        dst += sampleNearest(src, float2(pos.x+1.0,pos.y-1.0));
+        dst += sampleNearest(src, float2(pos.x-1.0,pos.y));
+        dst += sampleNearest(src, float2(pos.x+1.0,pos.y));
+        dst += sampleNearest(src, float2(pos.x-1.0,pos.y+1.0));
+        dst += sampleNearest(src, float2(pos.x,pos.y+1.0));
+        dst += sampleNearest(src, float2(pos.x+1.0,pos.y+1.0));  
+        
+        dst/=8.0;   // the average color of the surrounding pixels
+        dst = sampleNearest(src, pos) - dst;    // the difference between the average and current color
+        dst = sampleNearest(src, pos) + dst;    // the sum of the difference and the current color
+        
+        dst = mix(sampleNearest(src, pos),dst,strength * sharpenFactor);
     }
 }
