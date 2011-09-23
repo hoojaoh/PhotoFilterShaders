@@ -84,8 +84,8 @@ kernel Sharpen
         dst += sampleNearest(src, float2(pos.x+1.0,pos.y+1.0));  
         
         dst/=8.0;   // the average color of the surrounding pixels
-        dst = sampleNearest(src, pos) - dst;    // the difference between the average and current color
-        dst = sampleNearest(src, pos) + dst;    // the sum of the difference and the current color
+        float4 diff = sampleNearest(src, pos) - dst;    // the difference between the average and current color
+        dst = sampleNearest(src, pos) + diff;    // the sum of the difference and the current color
         
         dst = mix(sampleNearest(src, pos),dst,strength * sharpenFactor);
     }

@@ -1,0 +1,176 @@
+<languageVersion : 1.0;>
+
+kernel TinType
+<   namespace : "TinType";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 src;
+    output pixel4 dst;
+    
+    parameter float2 range
+    <
+        minValue:float2(0.0,0.0);
+        maxValue:float2(1.73205081,1.73205081);
+        defaultValue:float2(.4,.6);
+    >;
+    
+    parameter float3 color
+    <
+        minValue:float3(0.0,0.0,0.0);
+        maxValue:float3(1.0,1.0,1.0);
+        defaultValue:float3(0.5,0.5,0.5);
+    >;
+    
+    parameter float3x3 grayScale
+    <
+        defaultValue:float3x3(.3086,.6094,.0820,
+                                .3086,.6094,.0820,
+                                .3086,.6094,.0820);
+    >;
+    
+    parameter float contrast
+    <
+        minValue:float(0.0);
+        maxValue:float(3.0);
+        defaultValue:float(1.0);
+    >;
+    
+    parameter float mid
+    <
+        minValue:float(0.0);
+        maxValue:float(1.0);
+        defaultValue:float(0.5);
+    >;
+
+    parameter float blur
+    <
+        minValue:float(0.0);
+        maxValue:float(1.0);
+        defaultValue:float(1.0);
+    >;
+
+    void
+    evaluatePixel()
+    {
+        float2 pos = outCoord();
+        float4 p0,p1,p2,p3,p4,p5,p6,p7;
+        dst = sampleNearest(src,pos);
+        dst.rgb = dst.rgb * grayScale;
+        dst.r = ((dst.r - mid) * contrast) + mid;
+        dst.g = ((dst.g - mid) * contrast) + mid;
+        dst.b = ((dst.b - mid) * contrast) + mid;
+        dst.rgb = clamp(dst.rgb, float3(0.0,0.0,0.0), float3(1.0,1.0,1.0));
+        float len = length(dst.rgb);
+        
+        if(len > range[0] && len < range[1]){
+            dst.rgb = color.rgb;
+        }
+        float4 orig = dst;
+        
+        p0 = sampleNearest(src, float2(pos.x-1.0,pos.y-1.0));
+        p0.rgb = p0.rgb * grayScale;
+        p0.r = ((p0.r - mid) * contrast) + mid;
+        p0.g = ((p0.g - mid) * contrast) + mid;
+        p0.b = ((p0.b - mid) * contrast) + mid;
+        p0.rgb = clamp(p0.rgb, float3(0.0,0.0,0.0), float3(1.0,1.0,1.0));
+        len = length(p0.rgb);
+        if(len > range[0] && len < range[1]){
+            p0.rgb = color.rgb;
+        }
+        dst += p0;
+        
+        p1 = sampleNearest(src, float2(pos.x,pos.y-1.0));
+        p1.rgb = p1.rgb * grayScale;
+        p1.r = ((p1.r - mid) * contrast) + mid;
+        p1.g = ((p1.g - mid) * contrast) + mid;
+        p1.b = ((p1.b - mid) * contrast) + mid;
+        p1.rgb = clamp(p1.rgb, float3(0.0,0.0,0.0), float3(1.0,1.0,1.0));
+        len = length(p1.rgb);
+        if(len > range[0] && len < range[1]){
+            p1.rgb = color.rgb;
+        }
+        dst += p1;
+        
+        p2 = sampleNearest(src, float2(pos.x+1.0,pos.y-1.0));
+        p2.rgb = p2.rgb * grayScale;
+        p2.r = ((p2.r - mid) * contrast) + mid;
+        p2.g = ((p2.g - mid) * contrast) + mid;
+        p2.b = ((p2.b - mid) * contrast) + mid;
+        p2.rgb = clamp(p2.rgb, float3(0.0,0.0,0.0), float3(1.0,1.0,1.0));
+        len = length(p2.rgb);
+        if(len > range[0] && len < range[1]){
+            p2.rgb = color.rgb;
+        }
+        dst += p2;
+        
+        p3 = sampleNearest(src, float2(pos.x-1.0,pos.y));
+        p3.rgb = p3.rgb * grayScale;
+        p3.r = ((p3.r - mid) * contrast) + mid;
+        p3.g = ((p3.g - mid) * contrast) + mid;
+        p3.b = ((p3.b - mid) * contrast) + mid;
+        p3.rgb = clamp(p3.rgb, float3(0.0,0.0,0.0), float3(1.0,1.0,1.0));
+        len = length(p3.rgb);
+        if(len > range[0] && len < range[1]){
+            p3.rgb = color.rgb;
+        }
+        dst += p3;
+        
+        p4 = sampleNearest(src, float2(pos.x+1.0,pos.y));
+        p4.rgb = p4.rgb * grayScale;
+        p4.r = ((p4.r - mid) * contrast) + mid;
+        p4.g = ((p4.g - mid) * contrast) + mid;
+        p4.b = ((p4.b - mid) * contrast) + mid;
+        p4.rgb = clamp(p4.rgb, float3(0.0,0.0,0.0), float3(1.0,1.0,1.0));
+        len = length(p4.rgb);
+        if(len > range[0] && len < range[1]){
+            p4.rgb = color.rgb;
+        }
+        dst += p4;
+        
+        p5 = sampleNearest(src, float2(pos.x-1.0,pos.y+1.0));
+        p5.rgb = p5.rgb * grayScale;
+        p5.r = ((p5.r - mid) * contrast) + mid;
+        p5.g = ((p5.g - mid) * contrast) + mid;
+        p5.b = ((p5.b - mid) * contrast) + mid;
+        p5.rgb = clamp(p5.rgb, float3(0.0,0.0,0.0), float3(1.0,1.0,1.0));
+        len = length(p5.rgb);
+        if(len > range[0] && len < range[1]){
+            p5.rgb = color.rgb;
+        }
+        dst += p5;
+        
+        p6 = sampleNearest(src, float2(pos.x,pos.y+1.0));
+        p6.rgb = p6.rgb * grayScale;
+        p6.r = ((p6.r - mid) * contrast) + mid;
+        p6.g = ((p6.g - mid) * contrast) + mid;
+        p6.b = ((p6.b - mid) * contrast) + mid;
+        p6.rgb = clamp(p6.rgb, float3(0.0,0.0,0.0), float3(1.0,1.0,1.0));
+        len = length(p6.rgb);
+        if(len > range[0] && len < range[1]){
+            p6.rgb = color.rgb;
+        }
+        dst += p6;
+        
+        p7 = sampleNearest(src, float2(pos.x+1.0,pos.y+1.0));
+        p7.rgb = p7.rgb * grayScale;
+        p7.r = ((p7.r - mid) * contrast) + mid;
+        p7.g = ((p7.g - mid) * contrast) + mid;
+        p7.b = ((p7.b - mid) * contrast) + mid;
+        p7.rgb = clamp(p7.rgb, float3(0.0,0.0,0.0), float3(1.0,1.0,1.0));
+        len = length(p7.rgb);
+        if(len > range[0] && len < range[1]){
+            p7.rgb = color.rgb;
+        }
+        dst += p7;
+        
+        dst/= 8.0;
+        
+        dst = mix(orig, dst, blur);
+        
+        dst.r = ((dst.r - mid) * contrast) + mid;
+        dst.g = ((dst.g - mid) * contrast) + mid;
+        dst.b = ((dst.b - mid) * contrast) + mid;
+    }
+}

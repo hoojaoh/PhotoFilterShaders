@@ -1,0 +1,65 @@
+<languageVersion : 1.0;>
+
+kernel TinType
+<   namespace : "TinType";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 src;
+    output pixel4 dst;
+    
+    parameter float2 range
+    <
+        minValue:float2(0.0,0.0);
+        maxValue:float2(1.73205081,1.73205081);
+        defaultValue:float2(.4,.6);
+    >;
+    
+    parameter float3 color
+    <
+        minValue:float3(0.0,0.0,0.0);
+        maxValue:float3(1.0,1.0,1.0);
+        defaultValue:float3(0.5,0.5,0.5);
+    >;
+    
+    parameter float3x3 grayScale
+    <
+        defaultValue:float3x3(.3086,.6094,.0820,
+                                .3086,.6094,.0820,
+                                .3086,.6094,.0820);
+    >;
+    
+    parameter float contrast
+    <
+        minValue:float(0.0);
+        maxValue:float(3.0);
+        defaultValue:float(1.0);
+    >;
+    
+    parameter float mid
+    <
+        minValue:float(0.0);
+        maxValue:float(1.0);
+        defaultValue:float(0.5);
+    >;
+
+    parameter float blur
+    <
+        minValue:float(0.0);
+        maxValue:float(1.0);
+        defaultValue:float(1.0);
+    >;
+
+    void
+    evaluatePixel()
+    {
+        float2 pos = outCoord();
+        dst = sampleNearest(src,pos);
+        dst.rgb = dst.rgb * grayScale;
+        dst.r = ((dst.r - mid) * contrast) + mid;
+        dst.g = ((dst.g - mid) * contrast) + mid;
+        dst.b = ((dst.b - mid) * contrast) + mid;
+        
+    }
+}

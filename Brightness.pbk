@@ -1,0 +1,25 @@
+<languageVersion : 1.0;>
+
+kernel Brightness
+<   namespace : "Brightness";
+    vendor : "Paperless Post";
+    version : 1;
+>
+{
+    input image4 src;
+    output pixel4 dst;
+    
+    parameter float b
+    <
+        minValue:float(0.0);
+        maxValue:float(2.0);
+        defaultValue:float(1.0);
+    >;
+
+    void
+    evaluatePixel()
+    {
+        dst = sampleNearest(src,outCoord());
+        dst.rgb = mix(dst.rgb,float3(1.0,1.0,1.0),1.0 - b);
+    }
+}
